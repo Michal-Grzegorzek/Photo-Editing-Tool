@@ -2,8 +2,9 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog
 from tkinter.filedialog import askopenfilename,asksaveasfilename
-from PIL import Image, ImageTk, ImageFilter, ImageEnhance, ImageOps
+from PIL import Image, ImageTk, ImageFilter, ImageEnhance, ImageOps, ImageDraw
 import os
+import numpy as np
 
 
 
@@ -111,13 +112,49 @@ def flip_img(event):
     canvas2.create_image(300, 210, image=photo_image)
     canvas2.image = photo_image
 
+
 def crop_img():
     global img
-    pixels = 30
-    img = ImageOps.crop(img, pixels)
+    left = crop_left_entry.get()
+    right = crop_right_entry.get()
+    top = crop_top_entry.get()
+    bot = crop_bot_entry.get()
+    if crop_bot_entry.get() == '':
+        bot = 0
+    if crop_top_entry.get() == '':
+        top = 0
+    if crop_left_entry.get() == '':
+        left = 0
+    if crop_right_entry.get() == '':
+        right = 0
+    img = ImageOps.crop(img, (int(left), int(top), int(right), int(bot)))
     photo_image = ImageTk.PhotoImage(img)
     canvas2.create_image(300, 210, image=photo_image)
     canvas2.image = photo_image
+
+
+def crop_circle():
+    global img
+    height, width = img.size
+    lum_img = Image.new('L', [height, width], 0)
+
+    draw = ImageDraw.Draw(lum_img)
+    draw.pieslice([(0, 0), (height, width)], 0, 360,
+                  fill=255, outline="white")
+
+    img_arr = np.array(img)
+    lum_img_arr = np.array(lum_img)
+    # display(Image.fromarray(lum_img_arr))
+    final_img_arr = np.dstack((img_arr, lum_img_arr))
+    # display(Image.fromarray(final_img_arr))
+
+    canvas2.create_image(300, 210, image=final_img_arr)
+    canvas2.image = final_img_arr
+
+
+# def temp_text(e):
+#    textbox.delete(0,"end")
+
 
 # create canvas to display image
 canvas2 = Canvas(my_w, width="600", height="420", relief=RIDGE, bd=2)
@@ -137,6 +174,9 @@ filter_label.place(x=40, y=240)
 
 layout_label = Label(my_w, text="Layout", font="ariel 12 bold", anchor='e', fg='#FA7070')
 layout_label.place(x=40, y=370)
+
+pruning_label = Label(my_w, text="Pruning tools", font="ariel 12 bold", anchor='e', fg='#D2001A')
+pruning_label.place(x=40, y=470)
 
 
 btn_select = Button(my_w, text="Select Image", bg='#4649FF', fg='black',
@@ -185,10 +225,29 @@ flip_combo = ttk.Combobox(my_w, values=opt_flip, font=('ariel 10 bold'))
 flip_combo.place(x=100, y=430)
 flip_combo.bind("<<ComboboxSelected>>", flip_img)
 
-btn_crop = Button(my_w, text="Crop", bg='#8758FF',fg='black',
+btn_crop = Button(my_w, text="Crop", bg='#D2001A', fg='black',
                     font='ariel 12 bold', relief=GROOVE, command=crop_img, width=10)
-btn_crop.place(x=40, y=620)
+btn_crop.place(x=40, y=505)
 
+crop_left_label = Label(my_w, text="left:", font="ariel 10")
+crop_left_label.place(x=150, y=500)
+crop_left_entry = Entry(width=8)
+crop_left_entry.place(x=185, y=500)
+
+crop_right_label = Label(my_w, text="right:", font="ariel 10")
+crop_right_label.place(x=150, y=520)
+crop_right_entry = Entry(width=8)
+crop_right_entry.place(x=185, y=520)
+
+crop_top_label = Label(my_w, text="top:", font="ariel 10")
+crop_top_label.place(x=245, y=500)
+crop_top_entry = Entry(width=8)
+crop_top_entry.place(x=275, y=500)
+
+crop_bot_label = Label(my_w, text="bot:", font="ariel 10")
+crop_bot_label.place(x=245, y=520)
+crop_bot_entry = Entry(width=8)
+crop_bot_entry.place(x=275, y=520)
 
 solarize_label = Label(my_w, text="Solarize:", font=("ariel 13 bold"), width=9, anchor='e')
 solarize_label.place(x=15, y=170)
