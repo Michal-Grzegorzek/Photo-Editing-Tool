@@ -1,12 +1,15 @@
 from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from tkinter.filedialog import askopenfilename,asksaveasfilename
-from PIL import Image, ImageTk, ImageFilter, ImageEnhance, ImageOps, ImageDraw
+from PIL import Image, ImageTk, ImageFilter, ImageEnhance, ImageOps, ImageDraw, ImageFont
 import os
 import numpy as np
+import matplotlib.font_manager
 
 
+# system_fonts = matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
+# print(system_fonts)
 
 my_w = Tk()
 my_w.geometry("1000x1000")  # Size of the window
@@ -133,27 +136,65 @@ def crop_img():
     canvas2.image = photo_image
 
 
-def crop_circle():
+def watermark():
     global img
-    height, width = img.size
-    lum_img = Image.new('L', [height, width], 0)
+    img_new = img
+    draw = ImageDraw.Draw(img_new)
 
-    draw = ImageDraw.Draw(lum_img)
-    draw.pieslice([(0, 0), (height, width)], 0, 360,
-                  fill=255, outline="white")
+    text = text_water_entry.get()
+    font_size = size_font_entry.get()
+    font_entry = font_combo.get().lower()
+    color = color_combo.get()
+    pos_x = position_x_entry.get()
+    pos_y = position_y_entry.get()
 
-    img_arr = np.array(img)
-    lum_img_arr = np.array(lum_img)
-    # display(Image.fromarray(lum_img_arr))
-    final_img_arr = np.dstack((img_arr, lum_img_arr))
-    # display(Image.fromarray(final_img_arr))
+    if pos_x == '':
+        messagebox.showinfo(title="Position X", message="Complete the coordinates of the position X.")
+        return False
 
-    canvas2.create_image(300, 210, image=final_img_arr)
-    canvas2.image = final_img_arr
+    if pos_y == '':
+        messagebox.showinfo(title="Position Y", message="Complete the coordinates of the position Y.")
+        return False
+
+    if font_size == '':
+        font_size = 18
 
 
-# def temp_text(e):
-#    textbox.delete(0,"end")
+    if color == '':
+        color = 'black'
+
+    if font_entry == '':
+        font_entry = 'arial'
+
+    while True:
+        # ("font type",font size)
+        font_entry = ImageFont.truetype(f"{font_entry}.ttf", int(font_size))
+
+        # Decide the text location, color and font
+        # (255,255,255)-White color text
+        draw.text((int(pos_x), int(pos_y)), text, font=font_entry, fill=color)
+
+        photo_image = ImageTk.PhotoImage(img_new)
+        my = canvas2.create_image(300, 210, image=photo_image)
+        canvas2.image = photo_image
+
+        #
+        # y = messagebox.askyesno(title="Position Y", message="Complete the coordinates of the position Y.")
+        # print(y)
+        # if y == False:
+        #     print('end point')
+        #     canvas2.delete(my)
+        #     photo_image = ImageTk.PhotoImage(img)
+        #     canvas2.create_image(300, 210, image=photo_image)
+        #     canvas2.image = photo_image
+
+
+
+
+        break
+
+
+
 
 
 # create canvas to display image
@@ -178,10 +219,17 @@ layout_label.place(x=40, y=370)
 pruning_label = Label(my_w, text="Pruning tools", font="ariel 12 bold", anchor='e', fg='#D2001A')
 pruning_label.place(x=40, y=470)
 
+watermark_label = Label(my_w, text="Watermark", font="ariel 12 bold", anchor='e', fg='#FD841F')
+watermark_label.place(x=40, y=550)
+
 
 btn_select = Button(my_w, text="Select Image", bg='#4649FF', fg='black',
               font=('ariel 15 bold'), relief=GROOVE, command=upload_image)
 btn_select.place(x=400, y=495)
+
+btn_undo = Button(my_w, text="undoe", bg='#4649FF', fg='black',
+              font=('ariel 15 bold'), relief=GROOVE, command=canvas2.delete("square"))
+btn_undo.place(x=550, y=495)
 
 btn_gray = Button(my_w, text="Gray-scale", bg='#3D8361', fg='black', width=10,
                     font=('ariel 12 bold'), relief=GROOVE, command=gray_scale)
@@ -262,5 +310,48 @@ v2 = IntVar()
 scale2 = ttk.Scale(my_w, from_=1, to=5, variable=v2,
                    orient=HORIZONTAL, command=postersize)
 scale2.place(x=130, y=200)
+
+
+btn_water = Button(my_w, text="Add", bg='#FD841F', fg='black',
+                    font='ariel 12 bold', relief=GROOVE, command=watermark, width=10)
+btn_water.place(x=40, y=580)
+
+label_water_entry = Label(my_w, text="Enter text:", font="ariel 10")
+label_water_entry.place(x=160, y=580)
+
+text_water_entry = Entry(width=15)
+text_water_entry.place(x=250, y=580)
+
+label_font = Label(my_w, text="Choose a font:", font="ariel 10")
+label_font.place(x=160, y=620)
+
+opt_font = ['Arial', 'Calibri', 'Comic', 'Corbelli', 'Seguisbi', 'Trebucbi', 'Verdana']
+font_combo = ttk.Combobox(my_w, values=opt_font, font='ariel 10 bold', width=11)
+font_combo.place(x=250, y=620)
+
+label_size_font = Label(my_w, text="Font size:", font="ariel 10")
+label_size_font.place(x=160, y=600)
+
+size_font_entry = Entry(width=15)
+size_font_entry.place(x=250, y=600)
+
+label_color = Label(my_w, text="Choose color:", font="ariel 10")
+label_color.place(x=160, y=640)
+
+opt_color = ['Red', 'Yellow', 'Black', 'White', 'Orange', 'Gold', 'Green', 'Lime', 'Cyan', 'Blue', 'Purple', 'Pink']
+color_combo = ttk.Combobox(my_w, values=opt_color, font='ariel 10 bold', width=11)
+color_combo.place(x=250, y=640)
+
+label_position_x = Label(my_w, text="Position X:", font="ariel 10")
+label_position_x.place(x=40, y=620)
+
+position_x_entry = Entry(width=5)
+position_x_entry.place(x=110, y=620)
+
+label_position_y = Label(my_w, text="Position Y:", font="ariel 10")
+label_position_y.place(x=40, y=640)
+
+position_y_entry = Entry(width=5)
+position_y_entry.place(x=110, y=640)
 
 my_w.mainloop()
