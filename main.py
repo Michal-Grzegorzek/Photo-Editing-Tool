@@ -1,7 +1,7 @@
 from tkinter import *
 from tkinter import ttk
 from tkinter import filedialog, messagebox
-from tkinter.filedialog import askopenfilename,asksaveasfilename
+from tkinter.filedialog import askopenfilename, asksaveasfilename
 from PIL import Image, ImageTk, ImageFilter, ImageEnhance, ImageOps, ImageDraw, ImageFont
 import os
 import numpy as np
@@ -28,6 +28,36 @@ def upload_image():
     photo_img = ImageTk.PhotoImage(img)
     canvas2.create_image(300, 210, image=photo_img)
     canvas2.image = photo_img
+
+
+def reset():
+    global img_path, img
+    res = messagebox.askyesno(title="Do you want reset?",
+                              message="Do you want reset?\nAll previous changes will be lost.")
+
+    if res:
+        img = Image.open(img_path)
+        img.thumbnail((350, 350))
+        photo_img = ImageTk.PhotoImage(img)
+        canvas2.create_image(300, 210, image=photo_img)
+        canvas2.image = photo_img
+
+
+def save():
+    global img_path, img
+    ext = img_path.split(".")[-1]
+    file = asksaveasfilename(defaultextension=f".{ext}", filetypes=[(
+        "All Files", "*.*"), ("PNG file", "*.png"), ("jpg file", "*.jpg")])
+    if file:
+        img.save(file)
+        messagebox.showinfo(title="Saved successfully", message="The image was saved successfully.")
+
+
+def exit():
+    res = messagebox.askyesno(title="Are you sure?", message="Are you sure you want to exit?\n Unsaved changes will be lost.")
+
+    if res:
+        my_w.destroy()
 
 
 def rotate_image(func):
@@ -138,7 +168,7 @@ def crop_img():
 
 def watermark():
     global img
-    img_new = img
+    img_new = img.copy()
     draw = ImageDraw.Draw(img_new)
 
     text = text_water_entry.get()
@@ -175,30 +205,24 @@ def watermark():
         draw.text((int(pos_x), int(pos_y)), text, font=font_entry, fill=color)
 
         photo_image = ImageTk.PhotoImage(img_new)
-        my = canvas2.create_image(300, 210, image=photo_image)
+        canvas2.create_image(300, 210, image=photo_image)
         canvas2.image = photo_image
 
-        #
-        # y = messagebox.askyesno(title="Position Y", message="Complete the coordinates of the position Y.")
-        # print(y)
-        # if y == False:
-        #     print('end point')
-        #     canvas2.delete(my)
-        #     photo_image = ImageTk.PhotoImage(img)
-        #     canvas2.create_image(300, 210, image=photo_image)
-        #     canvas2.image = photo_image
-
-
-
+        res = messagebox.askyesno(title="Watermark save", message="Do you want to save this watermark?")
+        print(res)
+        if res == False:
+            print('end point')
+            photo_image = ImageTk.PhotoImage(img)
+            canvas2.create_image(300, 210, image=photo_image)
+            canvas2.image = photo_image
+        else:
+            img = img_new
 
         break
 
 
-
-
-
 # create canvas to display image
-canvas2 = Canvas(my_w, width="600", height="420", relief=RIDGE, bd=2)
+canvas2 = Canvas(my_w, width="600", height="530", relief=RIDGE, bd=2)
 canvas2.place(x=350, y=40)
 
 title = Label(my_w, text="Photo Editing Tool", font="ariel 17 bold", width=15, anchor='e')
@@ -224,15 +248,25 @@ watermark_label.place(x=40, y=550)
 
 
 btn_select = Button(my_w, text="Select Image", bg='#4649FF', fg='black',
-              font=('ariel 15 bold'), relief=GROOVE, command=upload_image)
+              font='ariel 15 bold', relief=GROOVE, command=upload_image)
 btn_select.place(x=400, y=495)
 
-btn_undo = Button(my_w, text="undoe", bg='#4649FF', fg='black',
-              font=('ariel 15 bold'), relief=GROOVE, command=canvas2.delete("square"))
-btn_undo.place(x=550, y=495)
+btn_reset = Button(my_w, text="Reset", bg='#4649FF', fg='black',
+              font='ariel 15 bold', relief=GROOVE, command=reset)
+btn_reset.place(x=550, y=495)
+
+btn_save = Button(my_w, text="Save", bg='#4649FF', fg='black',
+              font='ariel 15 bold', relief=GROOVE, command=save)
+btn_save.place(x=700, y=495)
+
+btn_exit = Button(my_w, text="Exit", bg='#4649FF', fg='black',
+              font='ariel 15 bold', relief=GROOVE, command=exit)
+btn_exit.place(x=800, y=495)
+
+
 
 btn_gray = Button(my_w, text="Gray-scale", bg='#3D8361', fg='black', width=10,
-                    font=('ariel 12 bold'), relief=GROOVE, command=gray_scale)
+                    font='ariel 12 bold', relief=GROOVE, command=gray_scale)
 btn_gray.place(x=40, y=120)
 
 btn_invert = Button(my_w, text="Invert image", bg='#3D8361', fg='black', width=10,
@@ -256,8 +290,6 @@ btn_find_edges = Button(my_w, text="Edges", bg='#8758FF',fg='black',
 btn_find_edges.place(x=180, y=320)
 
 
-
-
 rotate = Label(my_w, text="Rotate:", font="ariel 12 bold")
 rotate.place(x=40, y=400)
 values = [0, 90, 180, 270, 360]
@@ -269,7 +301,7 @@ rotate_combo.bind("<<ComboboxSelected>>", rotate_image)
 flip = Label(my_w, text="Flip:", font="ariel 12 bold")
 flip.place(x=40, y=430)
 opt_flip = ['FLIP LEFT TO RIGHT', 'FLIP TOP TO BOTTOM']
-flip_combo = ttk.Combobox(my_w, values=opt_flip, font=('ariel 10 bold'))
+flip_combo = ttk.Combobox(my_w, values=opt_flip, font='ariel 10 bold')
 flip_combo.place(x=100, y=430)
 flip_combo.bind("<<ComboboxSelected>>", flip_img)
 
